@@ -2,7 +2,7 @@ import sys
 import numpy as np
 from PySide6.QtWidgets import (
     QApplication ,QWidget, QMainWindow, QHBoxLayout, QVBoxLayout, QFormLayout,
-    QSpinBox, QLabel, QSizePolicy
+    QSpinBox, QLabel, QSizePolicy, QPushButton
 )
 
 from PySide6.QtGui import QImage, QPixmap
@@ -40,13 +40,44 @@ class ParameterWidget(QWidget):
         super().__init__()
         self.layout = QFormLayout()
 
+        # height parameter
         self.pattern_height_widget = QSpinBox()
         self.pattern_height_widget.setRange(0, 1000)
+        # width parameter
+        self.pattern_width_widget = QSpinBox()
+        self.pattern_width_widget.setRange(0, 1000)
+        # speckle diameter parameter
+        self.pattern_diameter_widget = QSpinBox()
+        self.pattern_diameter_widget.setRange(0, 100)
+        # dpi parameter
+        self.pattern_dpi_widget = QSpinBox()
+        self.pattern_dpi_widget.setRange(1, 1200)
+        # grid step parameter
+        self.pattern_step_widget = QSpinBox()
+        self.pattern_step_widget.setRange(0, 500)
+        # size randomness parameter
+        self.pattern_size_rand_widget = QSpinBox()
+        self.pattern_size_rand_widget.setRange(0, 100)
+        # position randomness parameter
+        self.pattern_position_rand_widget = QSpinBox()
+        self.pattern_position_rand_widget.setRange(0, 100)
+        # regenerate button
+        self.pattern_regen_widget = QPushButton()
+        self.pattern_regen_widget.setText("Apply")
+        self.pattern_regen_widget.setFixedSize(100,30)
 
 
-        self.layout.addRow("Image height (mm)", self.pattern_height_widget)
+        self.layout.addRow(" Height (mm)", self.pattern_height_widget)
+        self.layout.addRow(" Width (mm)", self.pattern_width_widget)
+        self.layout.addRow(" Diameter (mm)", self.pattern_diameter_widget)
+        self.layout.addRow(" Dpi (dot per inch)", self.pattern_dpi_widget)
+        self.layout.addRow(" Grid step (% of diameter)", self.pattern_step_widget)
+        self.layout.addRow(" Size randomness (%)", self.pattern_size_rand_widget)
+        self.layout.addRow(" Position randomness (%)", self.pattern_position_rand_widget)
+        self.layout.addRow("",self.pattern_regen_widget)
 
         self.setLayout(self.layout)
+
 
 class MainWindow(QMainWindow):
 
@@ -54,7 +85,6 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setFixedSize(750, 550)
-
 
         self.main_widget = QWidget()
         self.main_layout = QHBoxLayout(self.main_widget)
@@ -66,6 +96,10 @@ class MainWindow(QMainWindow):
         self.main_layout.addWidget(self.image, 4)
 
         self.setCentralWidget(self.main_widget)
+
+    def wire_connections(self):
+        #self.data.pattern_regen_widget.connect()
+        pass
 
 if __name__ == "__main__":
 
