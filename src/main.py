@@ -4,7 +4,6 @@ from PySide6.QtWidgets import (
     QApplication ,QWidget, QMainWindow, QHBoxLayout, QVBoxLayout, QFormLayout,
     QSpinBox, QLabel, QSizePolicy, QPushButton
 )
-
 from PySide6.QtGui import QImage, QPixmap
 
 
