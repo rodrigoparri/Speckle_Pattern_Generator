@@ -2,7 +2,7 @@ import sys
 import numpy as np
 from PySide6.QtWidgets import (
     QApplication ,QWidget, QMainWindow, QHBoxLayout, QVBoxLayout, QFormLayout,
-    QSpinBox, QDoubleSpinBox, QLabel, QSizePolicy, QPushButton
+    QSpinBox, QDoubleSpinBox, QLabel, QPushButton
 )
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtCore import Qt
@@ -16,6 +16,9 @@ class ImageWidget(QWidget):
         self.layout = QVBoxLayout()
         self.render_window = QLabel()
         self.render_window.setFixedSize(self.window_side, self.window_side)
+        self.render_window.setStyleSheet("background-color: white")
+        self.render_window.setFrameStyle(1)
+        self.render_window.setLineWidth(1)
         # initialize qimage with default values in image_speckle
         self.qimage = self.numpy_to_image(array)
         self.update_pixmap()
@@ -27,7 +30,7 @@ class ImageWidget(QWidget):
     def numpy_to_image(array: np.ndarray):
         if array.ndim == 2:
             height, width = array.shape
-            qimage = QImage(array.data, width, height, QImage.Format.Format_Grayscale8)
+            qimage = QImage(array.data, width, height, width, QImage.Format.Format_Grayscale8)
         else:
             raise ValueError("Unsupported array type: expected 2D grayscale")
         return qimage.copy()
@@ -44,8 +47,8 @@ class ImageWidget(QWidget):
     def update_pixmap(self):
         if self.qimage:
             scaled_pixmap = QPixmap.fromImage(self.qimage).scaled(
-                self.render_window.height(), self.render_window.width(),
-                aspectMode=Qt.KeepAspectRatio, mode=Qt.FastTransformation
+                self.render_window.width(), self.render_window.height(),
+                aspectMode=Qt.AspectRatioMode.KeepAspectRatioByExpanding, mode=Qt.TransformationMode.FastTransformation
             )
             self.render_window.setPixmap(scaled_pixmap)
 
@@ -56,7 +59,7 @@ class ParameterWidget(QWidget):
         self.layout = QFormLayout()
         # dictionary containing all values
         self.default_values = {
-            "height" : 25,
+            "height" : 50,
             "width" : 25,
             "diameter" : 0.5,
             "dpi" : 300,
@@ -84,7 +87,7 @@ class ParameterWidget(QWidget):
         self.dpi_widget.setValue(self.default_values["dpi"])
         # grid step parameter
         self.grid_step_widget = QDoubleSpinBox()
-        self.grid_step_widget.setRange(0.7, 10)
+        self.grid_step_widget.setRange(0.5, 10)
         self.grid_step_widget.setSingleStep(0.01)
         self.grid_step_widget.setValue(self.default_values["grid_step"])
         # minimum diameter parameter
@@ -97,18 +100,21 @@ class ParameterWidget(QWidget):
         self.rand_position_widget.setValue(self.default_values["rand_pos"])
         # regenerate button
         self.regen_widget = QPushButton()
-        self.regen_widget.setText("Apply")
+        self.regen_widget.setText("Regen")
         self.regen_widget.setFixedSize(100,30)
-
+        # invert button
+        self.invert_widget = QPushButton()
+        self.invert_widget.setText("Invert")
+        self.invert_widget.setFixedSize(100,30)
 
         self.layout.addRow(" Height (mm)", self.height_widget)
         self.layout.addRow(" Width (mm)", self.width_widget)
         self.layout.addRow(" Diameter (mm)", self.diameter_widget)
         self.layout.addRow(" Dpi (dot per inch)", self.dpi_widget)
         self.layout.addRow(" Grid step (% of diameter)", self.grid_step_widget)
-        self.layout.addRow(" Size randomness (%)", self.min_diameter_widget)
-        self.layout.addRow(" Position randomness (%)", self.rand_position_widget)
-        self.layout.addRow("",self.regen_widget)
+        self.layout.addRow(" Minimum diameter (% of diameter)", self.min_diameter_widget)
+        self.layout.addRow(" Position randomness (% of diameter)", self.rand_position_widget)
+        self.layout.addRow(self.invert_widget,self.regen_widget)
 
         self.setLayout(self.layout)
 
@@ -129,7 +135,8 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setFixedSize(750, 550)
+        self.setFixedSize(900, 550)
+        self.setWindowTitle("Speckle Generator - Rodrigo Parrilla")
 
         self.main_widget = QWidget()
         self.main_layout = QHBoxLayout(self.main_widget)
@@ -149,6 +156,8 @@ class MainWindow(QMainWindow):
                 self.values["rand_pos"]
             )
         )
+        # Flag storing whether the image is inverted. False by default
+        self.is_inverted = False
         self.wire_connections()
 
         self.main_layout.addWidget(self.data, 1)
@@ -159,6 +168,7 @@ class MainWindow(QMainWindow):
 
     def wire_connections(self):
         self.data.regen_widget.clicked.connect(self.update_image)
+        self.data.invert_widget.clicked.connect(self.invert_image)
 
     def gather_values(self):
         values = self.data.get_values()
@@ -176,7 +186,14 @@ class MainWindow(QMainWindow):
             self.values["min_diameter"],
             self.values["rand_pos"]
         )
-        self.image.set_image(array)
+        if self.is_inverted:
+            self.image.set_image(~array)
+        else:
+            self.image.set_image(array)
+
+    def invert_image(self):
+        self.is_inverted = not self.is_inverted
+        self.update_image()
 
 if __name__ == "__main__":
 
