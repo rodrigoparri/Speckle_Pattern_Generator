@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtCore import Qt
-from speckle_generator import image_speckle
+from speckle_generator import image_speckle, MIG
 
 GROUP_BOX_STYLESHEET = """
                    QGroupBox {
@@ -20,6 +20,7 @@ GROUP_BOX_STYLESHEET = """
                        padding: 0 3px 0 3px;
                    }
                """
+
 
 class ImageWidget(QWidget):
 
@@ -71,6 +72,7 @@ class ParameterWidget(QWidget):
         super().__init__()
         self.main_layout = QVBoxLayout()
         self.main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.main_layout.setContentsMargins(1, 10, 1, 10)
 
         self.data_box = QGroupBox("Data")
         self.data_box.setMaximumHeight(250)
@@ -84,12 +86,12 @@ class ParameterWidget(QWidget):
         self.layout = QFormLayout()
         self.default_values = {
             "height" : 50,
-            "width" : 25,
+            "width" : 50,
             "diameter" : 0.5,
             "dpi" : 300,
             "grid_step" : 1,
             "min_diameter" : 50,
-            "rand_pos" : 100
+            "rand_pos" : 50
         }
 
         # height parameter
@@ -123,7 +125,7 @@ class ParameterWidget(QWidget):
         self.rand_position_widget.setRange(0, 100)
         self.rand_position_widget.setValue(self.default_values["rand_pos"])
         # regenerate button
-        self.regen_widget = QPushButton("Apply")
+        self.regen_widget = QPushButton("Regenerate ▶")
         self.regen_widget.setFixedSize(100,30)
         # invert button
         self.invert_widget = QPushButton("Invert")
@@ -140,9 +142,9 @@ class ParameterWidget(QWidget):
         self.layout.addRow(" Minimum diameter (% of diameter)", self.min_diameter_widget)
         self.layout.addRow(" Position randomness (% of diameter)", self.rand_position_widget)
 
+        self.generate_layout.addWidget(self.defaults_button)
         self.generate_layout.addWidget(self.invert_widget)
         self.generate_layout.addWidget(self.regen_widget)
-        self.generate_layout.addWidget(self.defaults_button)
 
         self.data_box.setLayout(self.layout)
         self.generate_box.setLayout(self.generate_layout)
@@ -164,6 +166,15 @@ class ParameterWidget(QWidget):
         }
         return self.values
 
+    def set_default_values(self):
+        self.height_widget.setValue(self.default_values["height"])
+        self.width_widget.setValue(self.default_values["width"])
+        self.diameter_widget.setValue(self.default_values["diameter"])
+        self.dpi_widget.setValue(self.default_values["dpi"])
+        self.grid_step_widget.setValue(self.default_values["grid_step"])
+        self.min_diameter_widget.setValue(self.default_values["min_diameter"])
+        self.rand_position_widget.setValue(self.default_values["rand_pos"])
+
 
 class ResultsWidget(QWidget):
 
@@ -172,7 +183,7 @@ class ResultsWidget(QWidget):
 
         self.main_layout = QVBoxLayout()
         self.main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-
+        self.main_layout.setContentsMargins(1, 1, 1, 1)
         self.results_box = QGroupBox("Results")
         self.results_box.setMaximumHeight(150)
 
@@ -184,6 +195,7 @@ class ResultsWidget(QWidget):
         self.speckle_density_result_label = QLabel("%")
         self.MIG_result_label = QLabel("31")
         self.autocorrelation_map_generate_button = QPushButton("Generate")
+        self.autocorrelation_map_generate_button.setFixedSize(100, 30)
 
         self.results_layout.addWidget(self.speckle_density_label, 0, 0)
         self.results_layout.addWidget(self.MIG_label, 1, 0)
@@ -197,6 +209,9 @@ class ResultsWidget(QWidget):
 
         self.setLayout(self.main_layout)
 
+    def set_MIG_result(self, result):
+        self.MIG_result_label.setText(f"{result}")
+
 
 class SaveWidget(QWidget):
     def __init__(self):
@@ -204,14 +219,16 @@ class SaveWidget(QWidget):
 
         self.main_layout = QHBoxLayout()
         self.main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.main_layout.setContentsMargins(1, 10, 1, 10)
+
         self.save_group = QGroupBox("Save")
         self.save_layout = QHBoxLayout()
 
         self.save_button = QPushButton("Save as")
         self.save_params = QPushButton("Save Parameters")
 
-        self.save_layout.addWidget(self.save_button)
         self.save_layout.addWidget(self.save_params)
+        self.save_layout.addWidget(self.save_button)
 
         self.save_group.setLayout(self.save_layout)
 
@@ -228,15 +245,14 @@ class MainWindow(QMainWindow):
 
         self.main_widget = QWidget()
         self.main_layout = QGridLayout(self.main_widget)
+        self.main_layout.setSpacing(5)
 
         self.data = ParameterWidget()
         self.results = ResultsWidget()
         self.save = SaveWidget()
 
         self.values = self.gather_values()
-       #Create first image with defaults
-        self.image = ImageWidget(
-            image_speckle(
+        self.array = image_speckle(
                 self.values["width"],
                 self.values["height"],
                 self.values["diameter"],
@@ -245,31 +261,33 @@ class MainWindow(QMainWindow):
                 self.values["min_diameter"],
                 self.values["rand_pos"]
             )
-        )
+        self.inverted_array = ~self.array
+       #Create first image with defaults
+        self.image = ImageWidget(self.array)
         # Flag storing whether the image is inverted. False by default
         self.is_inverted = False
-        self.wire_connections()
-
 
         self.main_layout.addWidget(self.data, 0, 0)
         self.main_layout.addWidget(self.image, 0, 1, 3, 1)
         self.main_layout.addWidget(self.results, 1, 0)
         self.main_layout.addWidget(self.save, 2, 0)
 
+        self.wire_connections()
         self.setCentralWidget(self.main_widget)
 
     def wire_connections(self):
         self.data.regen_widget.clicked.connect(self.update_image)
         self.data.invert_widget.clicked.connect(self.invert_image)
+        self.data.defaults_button.clicked.connect(self.data.set_default_values)
 
     def gather_values(self):
         values = self.data.get_values()
         return values
 
-    def update_image(self):
+    def update_array(self):
         self.values  = self.gather_values()
         # create array
-        array = image_speckle(
+        self.array = image_speckle(
             self.values["width"],
             self.values["height"],
             self.values["diameter"],
@@ -278,15 +296,22 @@ class MainWindow(QMainWindow):
             self.values["min_diameter"],
             self.values["rand_pos"]
         )
-        if self.is_inverted:
-            self.image.set_image(~array)
-        else:
-            self.image.set_image(array)
+        self.inverted_array = ~self.array
+
+    def update_image(self):
+        self.update_array()
+        self.image.set_image(self.array)
 
     def invert_image(self):
         self.is_inverted = not self.is_inverted
-        self.update_image()
+        if self.is_inverted:
+            self.image.set_image(self.inverted_array)
+        else:
+            self.image.set_image(self.array)
 
+    def set_MIG(self, array):
+        mig = MIG(array)
+        self.results.set_MIG_result(mig)
 if __name__ == "__main__":
 
     App = QApplication(sys.argv)

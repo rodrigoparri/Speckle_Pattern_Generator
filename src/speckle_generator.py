@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import signal
 import math
 import sys
 
@@ -66,7 +67,7 @@ def image_speckle(width:int=5, height:int=30, diameter:float=0.5, resolution:int
     #print("num_x_steps", num_x_steps)
     #print("num_y_steps", num_y_steps)
     padding = 10 * grid_step_px
-    # initial image dimension are bigger for later trimming. +1 step is added for overflow safety
+    # initial image dimension are bigger for later trimming.
     initial_width_px = num_x_steps * grid_step_px + 2 * padding
     initial_height_px = num_y_steps * grid_step_px + 2 * padding
 
@@ -111,8 +112,23 @@ def image_speckle(width:int=5, height:int=30, diameter:float=0.5, resolution:int
             #print(y_coord, x_coord)
 
     # image crop
-    image = image[padding : padding + height_px, padding : padding + width_px]
+    init_crop = padding + diameter_px
+    image = image[init_crop : init_crop + height_px, init_crop : init_crop + width_px]
     return image.copy()
+
+def MIG(array:np.ndarray):
+    kernel_x = np.array([[0, 0, 0],
+                         [-0.5, 0, 0.5],
+                         [0, 0, 0]], dtype=np.float16)
+    # transpose of kernel_x
+    kernel_y = kernel_x.T
+    # images containing gradient values
+    grad_x = signal.convolve2d(array, kernel_x, mode='same', boundary='symm')
+    grad_y = signal.convolve2d(array, kernel_y, mode='same', boundary='symm')
+    grad_norm = np.sqrt(np.square(grad_x) + np.square(grad_y))
+    shape = array.shape
+    MIG = np.sum(grad_norm) / (shape[0] * shape[1])
+    return MIG
 
 if __name__ == "__main__":
 
