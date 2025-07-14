@@ -2,11 +2,12 @@ import sys
 import numpy as np
 from PySide6.QtWidgets import (
     QApplication ,QWidget, QMainWindow, QHBoxLayout, QVBoxLayout, QFormLayout, QGridLayout,
-    QSpinBox, QDoubleSpinBox, QLabel, QPushButton, QGroupBox
+    QSpinBox, QDoubleSpinBox, QLabel, QPushButton, QGroupBox, QFileDialog
 )
-from PySide6.QtGui import QImage, QPixmap
-from PySide6.QtCore import Qt
-from speckle_generator import image_speckle, MIG
+from PySide6.QtGui import QImage, QPixmap, QPainter, QPageSize
+from PySide6.QtCore import Qt, QRectF
+from PySide6.QtPrintSupport import QPrinter, QPrintPreviewDialog
+from speckle_generator import image_speckle, MIG, density
 
 GROUP_BOX_STYLESHEET = """
                    QGroupBox {
@@ -28,9 +29,11 @@ class ImageWidget(QWidget):
     def __init__(self, array):
         super().__init__()
         self.layout = QVBoxLayout()
+        self.layout.setContentsMargins(1, 1, 1, 1)
         self.render_window = QLabel()
         self.render_window.setFixedSize(self.window_side, self.window_side)
-        self.render_window.setStyleSheet("background-color: white")
+        self.render_window.setAlignment(Qt.AlignmentFlag.AlignTop)
+        #self.render_window.setStyleSheet("background-color: white")
         self.render_window.setFrameStyle(1)
         self.render_window.setLineWidth(1)
         # initialize qimage with default values in image_speckle
@@ -72,7 +75,7 @@ class ParameterWidget(QWidget):
         super().__init__()
         self.main_layout = QVBoxLayout()
         self.main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.main_layout.setContentsMargins(1, 10, 1, 10)
+        self.main_layout.setContentsMargins(1, 15, 1, 10)
 
         self.data_box = QGroupBox("Data")
         self.data_box.setMaximumHeight(250)
@@ -96,11 +99,11 @@ class ParameterWidget(QWidget):
 
         # height parameter
         self.height_widget = QSpinBox()
-        self.height_widget.setRange(10, 1000)
+        self.height_widget.setRange(10, 250)
         self.height_widget.setValue(self.default_values["height"])
         # width parameter
         self.width_widget = QSpinBox()
-        self.width_widget.setRange(10, 1000)
+        self.width_widget.setRange(10, 200)
         self.width_widget.setValue(self.default_values["width"])
         # speckle diameter parameter
         self.diameter_widget = QDoubleSpinBox()
@@ -191,7 +194,7 @@ class ResultsWidget(QWidget):
 
         self.speckle_density_label = QLabel("Density:")
         self.MIG_label = QLabel("MIG:")
-        self.autocorrelation_map = QLabel("Autocorrelation Map")
+        self.autocorrelation_map = QLabel("Autocorrelation Map:")
         self.speckle_density_result_label = QLabel("%")
         self.MIG_result_label = QLabel("31")
         self.autocorrelation_map_generate_button = QPushButton("Generate")
@@ -210,8 +213,10 @@ class ResultsWidget(QWidget):
         self.setLayout(self.main_layout)
 
     def set_MIG_result(self, result):
-        self.MIG_result_label.setText(f"{result}")
+        self.MIG_result_label.setText(f"{result:.3f}")
 
+    def set_density_result(self, result):
+        self.speckle_density_result_label.setText(f"{result:.3f}%")
 
 class SaveWidget(QWidget):
     def __init__(self):
@@ -225,10 +230,12 @@ class SaveWidget(QWidget):
         self.save_layout = QHBoxLayout()
 
         self.save_button = QPushButton("Save as")
-        self.save_params = QPushButton("Save Parameters")
+        self.save_params_button = QPushButton("Save Parameters")
+        self.print_button = QPushButton("Print")
 
-        self.save_layout.addWidget(self.save_params)
+        self.save_layout.addWidget(self.save_params_button)
         self.save_layout.addWidget(self.save_button)
+        self.save_layout.addWidget(self.print_button)
 
         self.save_group.setLayout(self.save_layout)
 
@@ -240,8 +247,14 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setFixedSize(900, 550)
         self.setWindowTitle("Speckle Generator - Rodrigo Parrilla")
+
+        self.menu_bar = self.menuBar()
+        self.file_menu = self.menu_bar.addMenu("File")
+        self.save_as_action = self.file_menu.addAction("Save as...")
+        self.save_params_action = self.file_menu.addAction("Save parameters")
+        self.load_params_action = self.file_menu.addAction("Load parameters")
+        self.print_action = self.file_menu.addAction("Print")
 
         self.main_widget = QWidget()
         self.main_layout = QGridLayout(self.main_widget)
@@ -262,6 +275,13 @@ class MainWindow(QMainWindow):
                 self.values["rand_pos"]
             )
         self.inverted_array = ~self.array
+
+        self.mig = MIG(self.array)
+        self.density = density(self.array)
+
+        self.set_MIG()
+        self.set_density()
+
        #Create first image with defaults
         self.image = ImageWidget(self.array)
         # Flag storing whether the image is inverted. False by default
@@ -274,11 +294,17 @@ class MainWindow(QMainWindow):
 
         self.wire_connections()
         self.setCentralWidget(self.main_widget)
+        self.showMaximized()
 
     def wire_connections(self):
         self.data.regen_widget.clicked.connect(self.update_image)
         self.data.invert_widget.clicked.connect(self.invert_image)
         self.data.defaults_button.clicked.connect(self.data.set_default_values)
+
+        self.save.save_button.clicked.connect(self.save_file)
+        self.save.print_button.clicked.connect(self.print_preview)
+
+        self.save_as_action.triggered.connect(self.save_file)
 
     def gather_values(self):
         values = self.data.get_values()
@@ -298,6 +324,9 @@ class MainWindow(QMainWindow):
         )
         self.inverted_array = ~self.array
 
+        self.set_MIG()
+        self.set_density()
+
     def update_image(self):
         self.update_array()
         self.image.set_image(self.array)
@@ -309,9 +338,43 @@ class MainWindow(QMainWindow):
         else:
             self.image.set_image(self.array)
 
-    def set_MIG(self, array):
-        mig = MIG(array)
-        self.results.set_MIG_result(mig)
+    def set_MIG(self):
+        self.results.set_MIG_result(self.mig)
+
+    def set_density(self):
+        self.results.set_density_result(self.density)
+
+    def save_file(self):
+        save_path, _ = QFileDialog.getSaveFileName(self,  "Save File", "",
+        "PNG Image (*.png);;JPEG Image (*.jpg);;BMP Image (*.bmp);;All Files (*)"
+        )
+        print("image saved")
+        self.image.qimage.save(save_path)
+
+    def print_preview(self):
+        printer = QPrinter()
+        printer.setPageSize(QPageSize.PageSizeId.A4)
+        printer.setResolution(self.values["dpi"])
+        print_preview = QPrintPreviewDialog(printer, self)
+        print_preview.paintRequested.connect(self.render_to_print)
+        print_preview.exec()
+
+    def render_to_print(self, printer):
+
+        painter = QPainter(printer)
+        image = self.image.qimage
+        image_width = self.image.qimage.width()
+        image_height = self.image.qimage.height()
+        dpi = self.values["dpi"]
+        mm_to_px = dpi / 25.4
+        left_margin = (210 * mm_to_px - image_width) / 2
+        top_margin = (270 * mm_to_px - image_height) / 2
+        target_rect = QRectF(left_margin, top_margin, image_width, image_height)
+        painter.drawImage(target_rect, image)
+        text_target_rect = QRectF(20 * mm_to_px, 280 * mm_to_px, 100 * mm_to_px, 10 * mm_to_px)
+        painter.drawText(text_target_rect, f"Density: {self.density:.3f} MIG: {self.mig:.3f}")
+        painter.end()
+
 if __name__ == "__main__":
 
     App = QApplication(sys.argv)

@@ -49,8 +49,6 @@ def image_speckle(width:int=5, height:int=30, diameter:float=0.5, resolution:int
     # target width and height to crop the image to at the end of the function
     width_px = math.floor(width * dpmm)
     height_px = math.floor(height * dpmm)
-    #print("W", width_px)
-    #print("H", height_px)
 
     diameter_px = math.ceil(diameter * dpmm)
     grid_step_px = math.ceil(diameter_px * grid_step)
@@ -119,7 +117,7 @@ def image_speckle(width:int=5, height:int=30, diameter:float=0.5, resolution:int
 def MIG(array:np.ndarray):
     kernel_x = np.array([[0, 0, 0],
                          [-0.5, 0, 0.5],
-                         [0, 0, 0]], dtype=np.float16)
+                         [0, 0, 0]], dtype=np.float32)
     # transpose of kernel_x
     kernel_y = kernel_x.T
     # images containing gradient values
@@ -130,7 +128,12 @@ def MIG(array:np.ndarray):
     MIG = np.sum(grad_norm) / (shape[0] * shape[1])
     return MIG
 
+def density(array:np.ndarray):
+    shape = array.shape
+    return (1-np.sum(np.divide(array, 255) / (shape[0]*shape[1]))) * 100
+
+
 if __name__ == "__main__":
 
     #generate_speckle(side_len=11, diameter=3)
-    print(image_speckle(25, 30, 1.5, 100, 1, 80, 20))
+    print(density(image_speckle(25, 30, 1.5, 100, 1, 80, 20)))
