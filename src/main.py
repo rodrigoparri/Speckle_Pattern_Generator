@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+import json
 from PySide6.QtWidgets import (
     QApplication ,QWidget, QMainWindow, QHBoxLayout, QVBoxLayout, QFormLayout, QGridLayout,
     QSpinBox, QDoubleSpinBox, QLabel, QPushButton, QGroupBox, QFileDialog
@@ -178,6 +179,15 @@ class ParameterWidget(QWidget):
         self.min_diameter_widget.setValue(self.default_values["min_diameter"])
         self.rand_position_widget.setValue(self.default_values["rand_pos"])
 
+    def set_values(self, values:dict):
+        self.height_widget.setValue(values["height"])
+        self.width_widget.setValue(values["width"])
+        self.diameter_widget.setValue(values["diameter"])
+        self.dpi_widget.setValue(values["dpi"])
+        self.grid_step_widget.setValue(values["grid_step"])
+        self.min_diameter_widget.setValue(values["min_diameter"])
+        self.rand_position_widget.setValue(values["rand_pos"])
+
 
 class ResultsWidget(QWidget):
 
@@ -308,10 +318,14 @@ class MainWindow(QMainWindow):
         self.data.invert_widget.clicked.connect(self.invert_image)
         self.data.defaults_button.clicked.connect(self.data.set_default_values)
 
+        self.save.save_params_button.clicked.connect(self.save_parameters)
         self.save.save_button.clicked.connect(self.save_file)
         self.save.print_button.clicked.connect(self.print_preview)
 
+        self.save_params_action.triggered.connect(self.save_parameters)
         self.save_as_action.triggered.connect(self.save_file)
+        self.load_params_action.triggered.connect(self.load_parameters)
+
 
     def gather_values(self):
         values = self.data.get_values()
@@ -357,6 +371,23 @@ class MainWindow(QMainWindow):
         "PNG Image (*.png);;JPEG Image (*.jpg);;BMP Image (*.bmp);;All Files (*)"
         )
         self.image.qimage.save(save_path)
+
+    def save_parameters(self):
+        save_path, _ = QFileDialog.getSaveFileName(self, "Save File", "",
+            "JSON file (*.json)"
+        )
+        with open(f"{save_path}", "w", encoding="utf8") as outfile:
+            file = json.dumps(self.values)
+            outfile.write(file)
+
+    def load_parameters(self):
+        load_path, _ = QFileDialog.getOpenFileName(self, "Load File", "",
+            "JSON file (*.json)"
+        )
+        with open(f"{load_path}", "r", encoding="utf8") as infile:
+            self.values = json.load(infile)
+            self.data.set_values(self.values)
+            self.update_image()
 
     def print_preview(self):
         printer = QPrinter()
