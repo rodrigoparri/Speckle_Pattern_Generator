@@ -93,8 +93,8 @@ class ParameterWidget(QWidget):
             "diameter" : 0.5,
             "dpi" : 300,
             "grid_step" : 1,
-            "min_diameter" : 50,
-            "rand_pos" : 50
+            "min_diameter" : 60,
+            "rand_pos" : 25
         }
 
         # height parameter
@@ -277,10 +277,10 @@ class MainWindow(QMainWindow):
         self.inverted_array = ~self.array
 
         self.mig = MIG(self.array)
-        self.density = density(self.array)
+        self.update_MIG()
 
-        self.set_MIG()
-        self.set_density()
+        self.density = density(self.array)
+        self.update_density()
 
        #Create first image with defaults
         self.image = ImageWidget(self.array)
@@ -294,7 +294,14 @@ class MainWindow(QMainWindow):
 
         self.wire_connections()
         self.setCentralWidget(self.main_widget)
-        self.showMaximized()
+        self.setFixedSize(900, 600)
+        self.show()
+        #center screen
+        screen = QApplication.primaryScreen().availableGeometry()
+        app_window = self.geometry()
+        move_x = (screen.width() - app_window.width()) // 2
+        move_y = (screen.height() - app_window.height()) // 2
+        self.move(move_x, move_y)
 
     def wire_connections(self):
         self.data.regen_widget.clicked.connect(self.update_image)
@@ -324,11 +331,10 @@ class MainWindow(QMainWindow):
         )
         self.inverted_array = ~self.array
 
-        self.set_MIG()
-        self.set_density()
-
     def update_image(self):
         self.update_array()
+        self.update_MIG()
+        self.update_density()
         self.image.set_image(self.array)
 
     def invert_image(self):
@@ -338,21 +344,23 @@ class MainWindow(QMainWindow):
         else:
             self.image.set_image(self.array)
 
-    def set_MIG(self):
+    def update_MIG(self):
+        self.mig = MIG(self.array)
         self.results.set_MIG_result(self.mig)
 
-    def set_density(self):
+    def update_density(self):
+        self.density = density(self.array)
         self.results.set_density_result(self.density)
 
     def save_file(self):
         save_path, _ = QFileDialog.getSaveFileName(self,  "Save File", "",
         "PNG Image (*.png);;JPEG Image (*.jpg);;BMP Image (*.bmp);;All Files (*)"
         )
-        print("image saved")
         self.image.qimage.save(save_path)
 
     def print_preview(self):
         printer = QPrinter()
+        printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
         printer.setPageSize(QPageSize.PageSizeId.A4)
         printer.setResolution(self.values["dpi"])
         print_preview = QPrintPreviewDialog(printer, self)
@@ -360,7 +368,6 @@ class MainWindow(QMainWindow):
         print_preview.exec()
 
     def render_to_print(self, printer):
-
         painter = QPainter(printer)
         image = self.image.qimage
         image_width = self.image.qimage.width()
@@ -372,12 +379,11 @@ class MainWindow(QMainWindow):
         target_rect = QRectF(left_margin, top_margin, image_width, image_height)
         painter.drawImage(target_rect, image)
         text_target_rect = QRectF(20 * mm_to_px, 280 * mm_to_px, 100 * mm_to_px, 10 * mm_to_px)
-        painter.drawText(text_target_rect, f"Density: {self.density:.3f} MIG: {self.mig:.3f}")
+        painter.drawText(text_target_rect, f"Density: {self.density:.3f}%  MIG: {self.mig:.3f}")
         painter.end()
 
 if __name__ == "__main__":
 
     App = QApplication(sys.argv)
     main_window = MainWindow()
-    main_window.showMaximized()
     sys.exit(App.exec())
