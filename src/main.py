@@ -1,11 +1,13 @@
 import sys
 import numpy as np
 import json
+#import os
+from pathlib import Path
 from PySide6.QtWidgets import (
     QApplication ,QWidget, QMainWindow, QHBoxLayout, QVBoxLayout, QFormLayout, QGridLayout,
     QSpinBox, QDoubleSpinBox, QLabel, QPushButton, QGroupBox, QFileDialog
 )
-from PySide6.QtGui import QImage, QPixmap, QPainter, QPageSize
+from PySide6.QtGui import QImage, QPixmap, QIcon, QPainter, QPageSize
 from PySide6.QtCore import Qt, QRectF
 from PySide6.QtPrintSupport import QPrinter, QPrintPreviewDialog
 from speckle_generator import image_speckle, MIG, density
@@ -23,6 +25,22 @@ GROUP_BOX_STYLESHEET = """
                    }
                """
 
+WINDOW_LOGO_PATH = Path("assets/logo.png")
+
+def resource_path(relative_path: Path) -> Path:
+    """
+    Get absolute path to resource.
+    """
+    # check if run from bundle
+    if hasattr(sys, "_MEIPASS") and getattr(sys, "frozen", False):
+        print("run from bundle")
+        try:
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = Path(".")
+    else:
+        base_path = Path(__file__).resolve().parent.parent
+    return base_path / relative_path
 
 class ImageWidget(QWidget):
 
@@ -202,7 +220,7 @@ class ResultsWidget(QWidget):
 
         self.results_layout = QGridLayout()
 
-        self.speckle_density_label = QLabel("Density:")
+        self.speckle_density_label = QLabel("Speckle Density:")
         self.MIG_label = QLabel("MIG:")
         self.autocorrelation_map = QLabel("Autocorrelation Map:")
         self.speckle_density_result_label = QLabel("%")
@@ -257,8 +275,10 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Speckle Generator - Rodrigo Parrilla")
-
+        #print(Path(__file__))
+        #print(resource_path(WINDOW_LOGO_PATH))
+        self.setWindowTitle("Speckle Pattern Generator - Rodrigo Parrilla")
+        self.setWindowIcon(QIcon(str(resource_path(WINDOW_LOGO_PATH))))
         self.menu_bar = self.menuBar()
         self.file_menu = self.menu_bar.addMenu("File")
         self.save_as_action = self.file_menu.addAction("Save as...")
@@ -376,18 +396,24 @@ class MainWindow(QMainWindow):
         save_path, _ = QFileDialog.getSaveFileName(self, "Save File", "",
             "JSON file (*.json)"
         )
-        with open(f"{save_path}", "w", encoding="utf8") as outfile:
-            file = json.dumps(self.values)
-            outfile.write(file)
+        if not save_path:
+            return
+        else:
+            with open(f"{save_path}", "w", encoding="utf8") as outfile:
+                file = json.dumps(self.values)
+                outfile.write(file)
 
     def load_parameters(self):
         load_path, _ = QFileDialog.getOpenFileName(self, "Load File", "",
             "JSON file (*.json)"
         )
-        with open(f"{load_path}", "r", encoding="utf8") as infile:
-            self.values = json.load(infile)
-            self.data.set_values(self.values)
-            self.update_image()
+        if not load_path:
+            return
+        else:
+            with open(f"{load_path}", "r", encoding="utf8") as infile:
+                self.values = json.load(infile)
+                self.data.set_values(self.values)
+                self.update_image()
 
     def print_preview(self):
         printer = QPrinter()
@@ -414,7 +440,6 @@ class MainWindow(QMainWindow):
         painter.end()
 
 if __name__ == "__main__":
-
     App = QApplication(sys.argv)
     main_window = MainWindow()
     sys.exit(App.exec())
