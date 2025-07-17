@@ -3,6 +3,10 @@ params_test/
 
 output/
 
+*.docx
+*docx
+*.tmp
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

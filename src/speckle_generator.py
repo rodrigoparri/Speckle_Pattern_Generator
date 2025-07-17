@@ -92,7 +92,7 @@ def image_speckle(width:int=5, height:int=30, diameter:float=0.5, resolution:int
     # higher index bound for selecting random speckle must be between 1 (inclusive) and buffer_poss (exclusive)
     high_index_bound = max(1, buffer_pos)
     # random position radius
-    random_radius_px = math.ceil(diameter_px *2* pos_rand_diam)
+    random_radius_px = math.ceil(diameter_px * pos_rand_diam)
     rand_pos_bound = max(1, random_radius_px)
 
     for y_coord in y_step_coord:
