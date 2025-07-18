@@ -186,13 +186,13 @@ class ParameterWidget(QWidget):
         self.layout.addRow(f" Width (mm) [{min_max_width[0]}-{min_max_width[1]}]", self.width_widget)
         self.layout.addRow(f" Maximum diameter (mm) [{min_max_diameter[0]}-{min_max_diameter[1]}]", self.diameter_widget)
         self.layout.addRow(f" Minimum diameter (%) [{min_max_mindiameter[0]}-{min_max_mindiameter[1]}]", self.min_diameter_widget)
-        self.layout.addRow(f" Resolution (dpi) [{min_max_dpi[0]}-{min_max_dpi[1]}", self.dpi_widget)
+        self.layout.addRow(f" Resolution (dpi) [{min_max_dpi[0]}-{min_max_dpi[1]}]", self.dpi_widget)
         self.layout.addRow(f" Grid step (%) [{min_max_grid_step[0]}-{min_max_grid_step[1]}]", self.grid_step_widget)
         self.layout.addRow(f" Position randomness (%) [{min_max_pos_rand[0]}-{min_max_pos_rand[1]}]", self.rand_position_widget)
 
+        self.generate_layout.addWidget(self.regen_widget)
         self.generate_layout.addWidget(self.defaults_button)
         self.generate_layout.addWidget(self.invert_widget)
-        self.generate_layout.addWidget(self.regen_widget)
 
         self.data_box.setLayout(self.layout)
         self.generate_box.setLayout(self.generate_layout)

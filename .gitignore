@@ -2,7 +2,7 @@ image_test/
 params_test/
 
 output/
-
+inno_setup/
 *.docx
 *docx
 *.tmp
