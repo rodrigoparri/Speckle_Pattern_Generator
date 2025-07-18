@@ -355,7 +355,7 @@ class MainWindow(QMainWindow):
         self.main_layout.addWidget(self.parameters, 0, 0)
         self.main_layout.addWidget(self.results, 1, 0)
         self.main_layout.addWidget(self.save, 2, 0)
-        self.main_layout.addWidget(self.author, 3, 0, 1, 1)
+        self.main_layout.addWidget(self.author, 3, 0, 1, 2)
 
         self.wire_connections()
         self.setCentralWidget(self.main_widget)
