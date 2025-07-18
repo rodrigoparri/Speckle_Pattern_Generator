@@ -242,22 +242,22 @@ class ResultsWidget(QWidget):
 
         self.speckle_density_label = QLabel("Speckle Density:")
         self.MIG_label = QLabel("MIG:")
-        self.autocorrelation_map = QLabel("Correlation coefficient_ZNSSD:")
+        #self.autocorrelation_map = QLabel("Correlation coefficient_ZNSSD:")
         self.speckle_density_result_label = QLabel("%")
         self.speckle_density_result_label.setToolTip("Percentage of black pixels over the total pixel amount")
         self.MIG_result_label = QLabel("31")
         self.MIG_result_label.setToolTip("""Mean Intensity Gradient of the image being 0 intensity
          black pixels and 255 intensity white pixels""")
-        self.autocorrelation_map_generate_label = QLabel("---------")
-        self.autocorrelation_map_generate_label.setToolTip("""Zero normalized sum of the square differences 
-        correlation coefficient""")
+        #self.autocorrelation_map_generate_label = QLabel("---------")
+        #self.autocorrelation_map_generate_label.setToolTip("""Zero normalized sum of the square differences
+        #correlation coefficient""")
 
         self.results_layout.addWidget(self.speckle_density_label, 0, 0)
         self.results_layout.addWidget(self.MIG_label, 1, 0)
-        self.results_layout.addWidget(self.autocorrelation_map, 2, 0)
+        #self.results_layout.addWidget(self.autocorrelation_map, 2, 0)
         self.results_layout.addWidget(self.speckle_density_result_label, 0, 1)
         self.results_layout.addWidget(self.MIG_result_label, 1, 1)
-        self.results_layout.addWidget(self.autocorrelation_map_generate_label, 2, 1)
+        #self.results_layout.addWidget(self.autocorrelation_map_generate_label, 2, 1)
 
         self.results_box.setLayout(self.results_layout)
         self.main_layout.addWidget(self.results_box)
