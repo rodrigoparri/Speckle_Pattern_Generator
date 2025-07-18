@@ -1,3 +1,9 @@
+"""
+Creative Commons Attribution 4.0 International Public License.
+See License.txt in the root directory.
+"""
+__author__ = "Rodrigo Parrilla Mesas"
+
 import numpy as np
 from scipy import signal
 import math
@@ -36,13 +42,6 @@ def image_speckle(width:int=5, height:int=30, diameter:float=0.5, resolution:int
     :param pos_rand: as % of the diameter, maximum random position deviation
     :return:array of speckles.
     """
-    width_checker = width <= 0
-    height_checker = height <= 0
-    diameter_checker = diameter <= 0
-    resolution_checker = resolution <= 0
-    grid_step_checker = grid_step <= 0.69
-    size_rand_checker = min_diameter < 1
-    pos_rand_checker = pos_rand <= 0
 
     # dots per mm
     dpmm = resolution / 25.4

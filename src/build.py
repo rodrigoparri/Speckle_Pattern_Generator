@@ -1,3 +1,9 @@
+"""
+Creative Commons Attribution 4.0 International Public License.
+See License.txt in the root directory.
+"""
+__author__ = "Rodrigo Parrilla Mesas"
+
 import PyInstaller.__main__
 from pathlib import Path
 import shutil

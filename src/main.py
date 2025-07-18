@@ -1,3 +1,9 @@
+"""
+Creative Commons Attribution 4.0 International Public License.
+See License.txt in the root directory.
+"""
+__author__ = "Rodrigo Parrilla Mesas"
+
 import sys
 import numpy as np
 import json
@@ -320,7 +326,7 @@ class MainWindow(QMainWindow):
         self.parameters = ParameterWidget()
         self.results = ResultsWidget()
         self.save = SaveWidget()
-        self.author = QLabel("Author: Rodrigo Parrilla Mesas 2025. License:")
+        self.author = QLabel("Author: Rodrigo Parrilla Mesas 2025. License:Creative Commons Attribution 4.0 International Public License.")
 
         self.values = self.gather_values()
         self.array = image_speckle(
