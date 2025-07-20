@@ -3,6 +3,9 @@ params_test/
 
 output/
 inno_setup/
+mySpeckle_Parameters/
+mySpeckle_Patterns/
+
 *.docx
 *docx
 *.tmp
