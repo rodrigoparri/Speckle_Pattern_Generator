@@ -10,6 +10,7 @@ import json
 import ctypes
 from pathlib import Path
 import os
+import webbrowser
 from PySide6.QtWidgets import (
     QApplication ,QWidget, QMainWindow, QHBoxLayout, QVBoxLayout, QFormLayout, QGridLayout,
     QSpinBox, QDoubleSpinBox, QLabel, QPushButton, QGroupBox, QFileDialog
@@ -34,6 +35,7 @@ GROUP_BOX_STYLESHEET = """
 
 WINDOW_LOGO_PATH = Path("assets/logo.png")
 DOCUMENTATION_PATH = Path("doc/Speckle_Pattern_Generator_Documentation.pdf")
+SOURCE_CODE_URL = "https://github.com/rodrigoparri/Speckle_Pattern_Generator.git"
 
 def resource_path(relative_path: Path) -> Path:
     """
@@ -128,7 +130,7 @@ class ParameterWidget(QWidget):
         min_max_height = (10, 250)
         min_max_width = (10, 200)
         min_max_diameter = (0.01, 100)
-        min_max_dpi = (1, 1200)
+        min_max_dpi = (1, 600)
         min_max_grid_step = (0.5, 10)
         min_max_mindiameter = (1, 100)
         min_max_pos_rand = (0, 200)
@@ -173,8 +175,8 @@ class ParameterWidget(QWidget):
         self.rand_position_widget.setValue(self.default_values["rand_pos"])
         self.rand_position_widget.setToolTip(f"Random position radius as % of maximum diameter, Min: {min_max_pos_rand[0]}, Max: {min_max_pos_rand[1]}")
         # regenerate button
-        self.regen_widget = QPushButton("Regenerate ▶")
-        self.regen_widget.setFixedSize(100,30)
+        self.regen_widget = QPushButton("Create Pattern ▶")
+        self.regen_widget.setFixedSize(120,30)
         # invert button
         self.invert_widget = QPushButton("Inverse")
         self.invert_widget.setFixedSize(100, 30)
@@ -248,22 +250,21 @@ class ResultsWidget(QWidget):
 
         self.speckle_density_label = QLabel("Speckle Density:")
         self.MIG_label = QLabel("MIG:")
-        #self.autocorrelation_map = QLabel("Correlation coefficient_ZNSSD:")
+        self.image_size = QLabel("Image size")
         self.speckle_density_result_label = QLabel("%")
         self.speckle_density_result_label.setToolTip("Percentage of black pixels over the total pixel amount")
         self.MIG_result_label = QLabel("31")
         self.MIG_result_label.setToolTip("""Mean Intensity Gradient of the image being 0 intensity
          black pixels and 255 intensity white pixels""")
-        #self.autocorrelation_map_generate_label = QLabel("---------")
-        #self.autocorrelation_map_generate_label.setToolTip("""Zero normalized sum of the square differences
-        #correlation coefficient""")
+        self.image_size_result_label = QLabel("---------")
+        self.image_size_result_label.setToolTip("""Image buffer size in MB""")
 
         self.results_layout.addWidget(self.speckle_density_label, 0, 0)
         self.results_layout.addWidget(self.MIG_label, 1, 0)
-        #self.results_layout.addWidget(self.autocorrelation_map, 2, 0)
+        self.results_layout.addWidget(self.image_size, 2, 0)
         self.results_layout.addWidget(self.speckle_density_result_label, 0, 1)
         self.results_layout.addWidget(self.MIG_result_label, 1, 1)
-        #self.results_layout.addWidget(self.autocorrelation_map_generate_label, 2, 1)
+        self.results_layout.addWidget(self.image_size_result_label, 2, 1)
 
         self.results_box.setLayout(self.results_layout)
         self.main_layout.addWidget(self.results_box)
@@ -275,6 +276,9 @@ class ResultsWidget(QWidget):
 
     def set_density_result(self, result):
         self.speckle_density_result_label.setText(f"{result:.3f}%")
+
+    def set_size_result(self, result):
+        self.image_size_result_label.setText(f"{result:,.3f} MB")
 
 class SaveWidget(QWidget):
     def __init__(self):
@@ -318,6 +322,7 @@ class MainWindow(QMainWindow):
         self.load_params_action = self.file_menu.addAction("Load parameters")
         self.print_action = self.file_menu.addAction("Print")
         self.documentation_action = self.menu_bar.addAction("Documentation")
+        self.go_to_source_repo_action = self.menu_bar.addAction("Source code")
 
         self.main_widget = QWidget()
         self.main_layout = QGridLayout(self.main_widget)
@@ -326,7 +331,7 @@ class MainWindow(QMainWindow):
         self.parameters = ParameterWidget()
         self.results = ResultsWidget()
         self.save = SaveWidget()
-        self.author = QLabel("Author: Rodrigo Parrilla Mesas 2025. License:Creative Commons Attribution 4.0 International Public License.")
+        self.author = QLabel("Author: Rodrigo Parrilla Mesas 2025. License: Creative Commons Attribution 4.0 International Public License.")
 
         self.values = self.gather_values()
         self.array = image_speckle(
@@ -338,6 +343,9 @@ class MainWindow(QMainWindow):
                 self.values["min_diameter"],
                 self.values["rand_pos"]
             )
+        self.image_size = self.array.shape[0] * self.array.shape[1] * 8 * 1E-6
+        self.results.set_size_result(self.image_size)
+
         self.inverted_array = ~self.array
 
         self.mig = MIG(self.array)
@@ -381,7 +389,7 @@ class MainWindow(QMainWindow):
         self.save_as_action.triggered.connect(self.save_file)
         self.load_params_action.triggered.connect(self.load_parameters)
         self.documentation_action.triggered.connect(self.show_documentation)
-
+        self.go_to_source_repo_action.triggered.connect(self.show_source_repo)
 
     def gather_values(self):
         values = self.parameters.get_values()
@@ -405,6 +413,7 @@ class MainWindow(QMainWindow):
         self.update_array()
         self.update_MIG()
         self.update_density()
+        self.update_image_size()
         self.image.set_image(self.array)
 
     def invert_image(self):
@@ -422,9 +431,14 @@ class MainWindow(QMainWindow):
         self.density = density(self.array)
         self.results.set_density_result(self.density)
 
+    def update_image_size(self):
+        self.image_size = self.array.shape[0] * self.array.shape[1] * 8 * 1E-6
+        self.results.set_size_result(self.image_size)
+
     def save_file(self):
+        QFileDialog.setDirectory()
         save_path, _ = QFileDialog.getSaveFileName(self,  "Save File", "",
-        "PNG Image (*.png);;JPEG Image (*.jpg);;BMP Image (*.bmp);;All Files (*)"
+        "PNG Image (*.png);;JPEG Image (*.jpg);;BMP Image (*.bmp);; TIFF Image (*.tiff) All Files (*)"
         )
         self.image.qimage.save(save_path)
 
@@ -477,6 +491,9 @@ class MainWindow(QMainWindow):
 
     def show_documentation(self):
         os.startfile(os.path.normpath(str(resource_path(DOCUMENTATION_PATH))))
+
+    def show_source_repo(self):
+        webbrowser.open(SOURCE_CODE_URL)
 
 if __name__ == "__main__":
     myappid = 'Speckle_Pattern_Generator_v1.0'  # arbitrary string
