@@ -5,6 +5,7 @@ output/
 inno_setup/
 mySpeckle_Parameters/
 mySpeckle_Patterns/
+Readme_images/
 
 *.docx
 *docx
