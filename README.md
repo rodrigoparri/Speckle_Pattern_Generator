@@ -13,7 +13,7 @@ The parameter box contains seven control parameters which are:
 6.	Grid step: Axis separation as a percentage of the maximum diameter of the speckle
 7.	Position randomness: Is the radius around its original position in the grid a speckle could be moved to as a percentage of the maximum diameter.
 
-![img.png](Readme_images/img.png)
+![GUI.jpg](Readme_images/GUI.jpg)
 
 The pattern generator algorithm converts all the introduced values from millimetres to dots using the resolution parameter. Initially the returned image is a white image of the requested size plus some padding so there are no out of bounds writing problems. The image has to be divided by a square grid in whose nodes the speckles will be centered.
  
@@ -21,3 +21,22 @@ Next, a brand knew speckle buffer is created where all the unique speckles will 
 
 Finally, the image is cropped to the required size and sent to the app for its rendering.
 The pattern generator algorithm makes use of a simpler algorithm that generates each individual speckle. This algorithm creates an array of pixels the size of the maximum speckle diameter and paints black each pixel that is a speckle radius or less away from the centre of the image. Each unique speckle is created this way and the stored in the speckle buffer.
+
+## Generate
+When you press the Regenerate button the introduced parameters are gathered and passed to the speckle generator algorithm, the returned array is passed to the image widget, the one in charge of the rendering process. Although the parameters might be the same, no two image will be the same because of the implicit randomness in the generation process.
+
+The inverse button will switch the pixels from black to white and white to black. The regenerated image is a non-inverse one.
+
+The set defaults button resets the parameters to the default values (the ones the application started with).
+
+## Results
+1. Density: Percentage of speckle pixels over the total amount of pixels
+![densitiy_formula.jpg](Readme_images/density_formula.jpg)
+2. MIG: Mean Intensity Gradient
+![MIG_formula.jpg](Readme_images/MIG_formula.jpg)
+Where:
+• I is the intensity function defined by the image
+• i, j are the parameters representing each pixel position in the image
+• W(px), H(px) are the width and height in pixels respectively of the image
+
+
