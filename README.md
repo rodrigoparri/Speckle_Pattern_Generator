@@ -30,13 +30,18 @@ The inverse button will switch the pixels from black to white and white to black
 The set defaults button resets the parameters to the default values (the ones the application started with).
 
 ## Results
-1. Density: Percentage of speckle pixels over the total amount of pixels
-![densitiy_formula.jpg](Readme_images/density_formula.jpg)
-2. MIG: Mean Intensity Gradient
-![MIG_formula.jpg](Readme_images/MIG_formula.jpg)
-Where:
-• I is the intensity function defined by the image
-• i, j are the parameters representing each pixel position in the image
+1. Density: Percentage of speckle pixels over the total amount of pixels  
+
+    $Density =\frac{\text{Nº of Speckle pixels (initially black)}}{\text{width(px)} \times \text{height(px)}} \times 100$
+
+2. MIG: Mean Intensity Gradient  
+$MIG = \frac{ \sum_{i=0}^{W(px)} \sum_{j=0}^{H(px)} 
+\sqrt{ \left( \frac{\partial I}{\partial i} \right)^2 + \left( \frac{\partial I}{\partial j} \right)^2 } }
+{W(px) \cdot H(px)}$
+
+Where:  
+• I is the intensity function defined by the image  
+• i, j are the parameters representing each pixel position in the image  
 • W(px), H(px) are the width and height in pixels respectively of the image
 
 
