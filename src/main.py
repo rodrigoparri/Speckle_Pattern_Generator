@@ -35,6 +35,8 @@ GROUP_BOX_STYLESHEET = """
 
 WINDOW_LOGO_PATH = Path("assets/logo.png")
 DOCUMENTATION_PATH = Path("doc/Speckle_Pattern_Generator_Documentation.pdf")
+DEFAULT_SAVE_IMAGE_PATH = Path("mySpeckle_Patterns")
+DEFAULT_SAVE_PARAMS_PATH = Path("mySpeckle_Parameters")
 SOURCE_CODE_URL = "https://github.com/rodrigoparri/Speckle_Pattern_Generator.git"
 
 def resource_path(relative_path: Path) -> Path:
@@ -250,7 +252,7 @@ class ResultsWidget(QWidget):
 
         self.speckle_density_label = QLabel("Speckle Density:")
         self.MIG_label = QLabel("MIG:")
-        self.image_size = QLabel("Image size")
+        self.image_size = QLabel("Image buffer size:")
         self.speckle_density_result_label = QLabel("%")
         self.speckle_density_result_label.setToolTip("Percentage of black pixels over the total pixel amount")
         self.MIG_result_label = QLabel("31")
@@ -277,7 +279,7 @@ class ResultsWidget(QWidget):
     def set_density_result(self, result):
         self.speckle_density_result_label.setText(f"{result:.3f}%")
 
-    def set_size_result(self, result):
+    def set_mem_size_result(self, result):
         self.image_size_result_label.setText(f"{result:,.3f} MB")
 
 class SaveWidget(QWidget):
@@ -343,8 +345,9 @@ class MainWindow(QMainWindow):
                 self.values["min_diameter"],
                 self.values["rand_pos"]
             )
-        self.image_size = self.array.shape[0] * self.array.shape[1] * 8 * 1E-6
-        self.results.set_size_result(self.image_size)
+        self.dots_per_meter = self.values["dpi"] * 1000 / 25.4
+        self.image_mem_size = self.array.shape[0] * self.array.shape[1] * 8 * 1E-6
+        self.results.set_mem_size_result(self.image_mem_size)
 
         self.inverted_array = ~self.array
 
@@ -432,18 +435,19 @@ class MainWindow(QMainWindow):
         self.results.set_density_result(self.density)
 
     def update_image_size(self):
-        self.image_size = self.array.shape[0] * self.array.shape[1] * 8 * 1E-6
-        self.results.set_size_result(self.image_size)
+        self.image_mem_size = self.array.shape[0] * self.array.shape[1] * 8 * 1E-6
+        self.results.set_mem_size_result(self.image_mem_size)
 
     def save_file(self):
-        QFileDialog.setDirectory()
-        save_path, _ = QFileDialog.getSaveFileName(self,  "Save File", "",
-        "PNG Image (*.png);;JPEG Image (*.jpg);;BMP Image (*.bmp);; TIFF Image (*.tiff) All Files (*)"
+        save_path, _ = QFileDialog.getSaveFileName(self,  "Save File", str(resource_path(DEFAULT_SAVE_IMAGE_PATH)),
+        "PNG Image (*.png);;JPEG Image (*.jpg);;BMP Image (*.bmp);; TIFF Image (*.tiff);; All Files (*)"
         )
+        self.image.qimage.setDotsPerMeterX(int(self.dots_per_meter))
+        self.image.qimage.setDotsPerMeterY(int(self.dots_per_meter))
         self.image.qimage.save(save_path)
 
     def save_parameters(self):
-        save_path, _ = QFileDialog.getSaveFileName(self, "Save File", "",
+        save_path, _ = QFileDialog.getSaveFileName(self, "Save File", str(resource_path(DEFAULT_SAVE_PARAMS_PATH)),
             "JSON file (*.json)"
         )
         if not save_path:

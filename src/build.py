@@ -7,6 +7,7 @@ __author__ = "Rodrigo Parrilla Mesas"
 import PyInstaller.__main__
 from pathlib import Path
 import shutil
+import os
 
 if __name__ == "__main__":
     # make all paths relative to the project path instead of the current working directory
@@ -18,7 +19,9 @@ if __name__ == "__main__":
     documentation_path = root_path / "doc/Speckle_Pattern_Generator_Documentation.pdf"
     dist_path = root_path / "output/dist"
     work_path = root_path / "output/build"
-
+    #relative to project file structure
+    mySpeckle_Patterns_path = dist_path / "Speckle Pattern Generator/_internal/mySpeckle_Patterns"
+    mySpeckle_Parameters_path = dist_path / "Speckle Pattern Generator/_internal/mySpeckle_Parameters"
 
     # clean the output directory before building
     if output_path.exists() and any(output_path.iterdir()):
@@ -41,3 +44,6 @@ if __name__ == "__main__":
         f"--add-data={logo_path}:assets",
         f"--add-data={documentation_path}:doc"
     ])
+
+    os.makedirs(mySpeckle_Patterns_path, exist_ok=True)
+    os.makedirs(mySpeckle_Parameters_path, exist_ok=True)
