@@ -44,6 +44,3 @@ if __name__ == "__main__":
         f"--add-data={logo_path}:assets",
         f"--add-data={documentation_path}:doc"
     ])
-
-    os.makedirs(mySpeckle_Patterns_path, exist_ok=True)
-    os.makedirs(mySpeckle_Parameters_path, exist_ok=True)
