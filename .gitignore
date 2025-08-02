@@ -10,6 +10,7 @@ mySpeckle_Patterns/
 *.docx
 *docx
 *.tmp
+*.exe
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
