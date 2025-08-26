@@ -170,7 +170,7 @@ class ParameterWidget(QWidget):
         self.grid_step_widget.setSingleStep(0.01)
         self.grid_step_widget.setLocale(QLocale(QLocale.Language.English))
         self.grid_step_widget.setValue(self.default_values["grid_step"])
-        self.grid_step_widget.setToolTip(f"Span between grid axis in mm, Min: {min_max_grid_step[0]}, Max: {min_max_grid_step[1]}")
+        self.grid_step_widget.setToolTip(f"Span between grid axis as times the diameter, Min: {min_max_grid_step[0]}, Max: {min_max_grid_step[1]}")
         # position randomness parameter
         self.rand_position_widget = QSpinBox()
         self.rand_position_widget.setRange(min_max_pos_rand[0], min_max_pos_rand[1])
@@ -191,7 +191,7 @@ class ParameterWidget(QWidget):
         self.layout.addRow(f" Maximum diameter (mm) [{min_max_diameter[0]}-{min_max_diameter[1]}]", self.diameter_widget)
         self.layout.addRow(f" Minimum diameter (%) [{min_max_mindiameter[0]}-{min_max_mindiameter[1]}]", self.min_diameter_widget)
         self.layout.addRow(f" Resolution (dpi) [{min_max_dpi[0]}-{min_max_dpi[1]}]", self.dpi_widget)
-        self.layout.addRow(f" Grid step (%) [{min_max_grid_step[0]}-{min_max_grid_step[1]}]", self.grid_step_widget)
+        self.layout.addRow(f" Grid step (times diameter) [{min_max_grid_step[0]}-{min_max_grid_step[1]}]", self.grid_step_widget)
         self.layout.addRow(f" Position randomness (%) [{min_max_pos_rand[0]}-{min_max_pos_rand[1]}]", self.rand_position_widget)
 
         self.generate_layout.addWidget(self.regen_widget)
@@ -499,10 +499,23 @@ class MainWindow(QMainWindow):
     def show_source_repo(self):
         webbrowser.open(SOURCE_CODE_URL)
 
+
+class MainApp(QApplication):
+    _instance = None
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+           cls._instance = super().__new__(cls, *args, **kwargs)
+           return cls._instance
+        else:
+            return cls._instance
+
+    def __init__(self, sys_argv):
+        super().__init__(sys_argv)
+        self.id = 'Speckle_Pattern_Generator_v1.0'  # arbitrary string
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(self.id)
+        self.setWindowIcon(QIcon(str(resource_path(WINDOW_LOGO_PATH))))
+        self.main_window = MainWindow()
+        sys.exit(self.exec())
+
 if __name__ == "__main__":
-    myappid = 'Speckle_Pattern_Generator_v1.0'  # arbitrary string
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-    App = QApplication(sys.argv)
-    App.setWindowIcon(QIcon(str(resource_path(WINDOW_LOGO_PATH))))
-    main_window = MainWindow()
-    sys.exit(App.exec())
+    App = MainApp(sys.argv)
