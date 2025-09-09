@@ -490,7 +490,10 @@ class MainWindow(QMainWindow):
         target_rect = QRectF(left_margin, top_margin, image_width, image_height)
         painter.drawImage(target_rect, image)
         text_target_rect = QRectF(20 * mm_to_px, 280 * mm_to_px, 100 * mm_to_px, 10 * mm_to_px)
-        painter.drawText(text_target_rect, f"Density: {self.density:.3f}%  MIG: {self.mig:.3f}")
+        painter.drawText(text_target_rect,
+        f"""Density: {self.density:.3f}%, max diameter: {self.values["diameter"]}mm, dpi: {self.values["dpi"]}, position rand: {self.values["rand_pos"]}%,
+            MIG: {self.mig:.3f}, min diameter:{self.values["min_diameter"]}%, grid step: {self.values["grid_step"]} diameters
+        """)
         painter.end()
 
     def show_documentation(self):
